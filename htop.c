@@ -6,49 +6,44 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "get_pids.h"
+#include "get_pid_name.h"
 
 int main(void){
 
     initscr();
+    raw();
     int height, width, start_x, start_y;
-    height = 20;
-    width = 30;
-    start_x = 2;
-    start_y = 2;
+    height = LINES;
+    width = COLS;
+    start_x = 0;
+    start_y = 0;
 
     WINDOW *win = newwin(height, width, start_x, start_y);
-    box(win, 0,0);
+    box(win, ACS_VLINE, ACS_HLINE);
+    refresh();
 
-    DIR *dir;
-    struct dirent *entry;
-   // struct stat fileStat;
-
-    // j'ouvre le proc (répertoire des processe)
-    dir = opendir("/proc");
-    if (dir == NULL){
-        perror("Erreur sa s'ouvre pas");
-        return 1;
-    }
-    // ont lit les entrée du repertoire
-    while ((entry = readdir(dir)) != NULL)
+    int *id_process = get_pids();
+    if (id_process != NULL)
     {
-        // on ignore les entrée qui ne sont pas des répertoire
-        if (entry->d_type == DT_DIR){
-            // on convertit le nom du dossier en nombre pour filtrer le process
-            int pid = atoi(entry->d_name);
-
-            // on ignore les process non valide
-            if(pid > 0){
-                printw("Process trouvé : %d\n", pid);
-            }
+        for (int i = 0; id_process[i]; i++)
+        {
+            mvwprintw(win, i, COLS / 2, "%d", id_process[i]);
+            mvwprintw(win, i, 0, "%s", get_pid_name(id_process[i]));
         }
+        
     }
+    
+free(id_process);
     
     // printw("Process ID: %d\n", getpid());
     // printw("Parent Process ID: %d\n", getppid());
-    refresh();
+    mvwprintw(win, 2, 2, "c'est ibrah");
+    wrefresh(win);
+    getch();
     getch();
     endwin();
+    free(win);
 
 
     return 0;
